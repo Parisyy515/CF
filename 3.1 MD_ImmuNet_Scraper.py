@@ -278,7 +278,7 @@ def main():
 
         memberIdArray.append(m)
 
-    for n in range(1, total):
+    for n in range(total):
         p = peopleArray[n]
         recordToWrite = ''
         print('Looking up: ' + str(n)+' ' +
