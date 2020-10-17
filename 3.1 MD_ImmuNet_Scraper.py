@@ -23,8 +23,11 @@
 # Imports
 import csv
 import datetime
+import os.path
+import time
 
 import pandas as pd
+from dateutil.parser import parse
 from pandas import DataFrame
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
@@ -90,6 +93,7 @@ def is_date(string, fuzzy=False):
 
 
 def immunte(Fname, Lname, DOB, Gender, user, pw):
+
     # work on setting up driver for md immunet
     PATH = "/Users/zhengguo/chromedriver"
     driver = webdriver.Chrome(PATH)
@@ -158,7 +162,7 @@ def immunte(Fname, Lname, DOB, Gender, user, pw):
             "//*[@id='container']/table[3]/tbody/tr/td[2]/table[2]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr[5]/td[1]").text
 
         if (first == None):
-            print("Not found")
+            print(Fname+' '+Lname+' '+" Not found")
             al = []
         else:
             even = driver.find_elements_by_class_name("evenRow")
@@ -274,7 +278,7 @@ def main():
 
         memberIdArray.append(m)
 
-    for n in range(1, 2):
+    for n in range(1, total):
         p = peopleArray[n]
         recordToWrite = ''
         print('Looking up: ' + str(n)+' ' +
@@ -300,14 +304,14 @@ def main():
 
             for child in children:
                 fileOutput.write(child + '\n')
-            # avoid making requests too frequently to not crash the site
-            time.sleep(30)
+        # avoid making requests too frequently to not crash the site
+        time.sleep(30)
         n = +1
 
     fileOutput.close()
     fileOutputNotFound.close()
 
-    print('\n--------------------OUTPUT--------------------')
+    print('\n--------------------------------OUTPUT--------------------------------')
     print("Script completed.")
     print("There are "+str(total)+" members in the original lookup list provided.")
     print("There are "+str(found) +
@@ -315,7 +319,7 @@ def main():
     print("There are "+str(not_found) +
           " members were not found on the MD immunization website.\n")
     print('Files saved: \n' + fileOutputName + '\n' + fileOutputNameNotFound)
-    print('\n----------------------------------------------\n')
+    print('\n----------------------------------------------------------------------\n')
 
 
 ##############################################################################
