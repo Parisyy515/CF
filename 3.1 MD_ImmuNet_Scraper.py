@@ -29,6 +29,7 @@ import time
 import pandas as pd
 from dateutil.parser import parse
 from pandas import DataFrame
+
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
 
@@ -291,21 +292,29 @@ def main():
         DOB = str(p.getDateOfBirth())
         Gender = p.getGender()
         StateRes = p.getStateRes()
-        recordToWrite = MeasYr+','+MemberIdSkey+','+MemberId+',' + \
-            Fname+','+Lname + ','+DOB+','+Gender+','+StateRes+','+'MD'
         children = immunte(Fname, Lname, DOB, Gender, user, pw)
+
         if children == []:
             not_found += 1
             fileOutputNotFound.write(recordToWrite + '\n')
         elif children != []:
             found += 1
             for x in range(len(children)):
-                children[x] = recordToWrite+',' + children[x]
+                data_element = children[x].split(",")
+                # if the admin date is not valid skip the records
+                if is_date(data_element[1]):
+                    continue
+                else:
+                    children[x] = ''
+            for x in range(len(children)):
+                if children[x] != '':
+                    recordToWrite = MeasYr+','+MemberIdSkey+','+MemberId+',' + \
+                        Fname+','+Lname + ','+DOB+','+Gender+','+StateRes+','+'MD'
+                    recordToWrite = recordToWrite+','+children[x]
+                    fileOutput.write(recordToWrite + '\n')
 
-            for child in children:
-                fileOutput.write(child + '\n')
         # avoid making requests too frequently to not crash the site
-        time.sleep(30)
+        time.sleep(15)
         n = +1
 
     fileOutput.close()
