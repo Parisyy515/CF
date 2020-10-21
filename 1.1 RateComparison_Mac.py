@@ -170,7 +170,7 @@ def each_population(loc, month):
             .applymap(lambda x: 'background-color: %s' % 'pink' if x < threahold else 'background-color: %s' % 'white', subset=['DifferenceII'])\
             .applymap(lambda x: 'background-color: %s' % 'pink' if x < threahold else 'background-color: %s' % 'white', subset=['Diff_Denom'])\
             .applymap(lambda x: 'background-color: %s' % 'pink' if x < threahold else 'background-color: %s' % 'white', subset=['Diff_Num'])\
-            .background_gradient(cmap='Blues', subset=['Sep20_Rate'])\
+            .background_gradient(cmap='Blues', subset=[month+'20_Rate'])\
             .to_excel(f'{Population_name}_Difference_{now}.xlsx', engine='openpyxl', index=False)
 
     data = []

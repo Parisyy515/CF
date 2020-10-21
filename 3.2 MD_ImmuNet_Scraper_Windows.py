@@ -23,13 +23,13 @@
 # Imports
 import csv
 import datetime
+import os
 import os.path
 import time
 
 import pandas as pd
 from dateutil.parser import parse
 from pandas import DataFrame
-
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
 
@@ -95,8 +95,8 @@ def is_date(string, fuzzy=False):
 
 def immunte(Fname, Lname, DOB, Gender, user, pw):
 
-    # work on setting up driver for md immunet
-    PATH = "/Users/zhengguo/chromedriver"
+    # work on setting up driver for md immunet - mac forward slash/windows double backward slash
+    PATH = os.getcwd()+'\\'+'chromedriver'
     driver = webdriver.Chrome(PATH)
     driver.get("https://www.mdimmunet.org/prd-IR/portalInfoManager.do")
 
@@ -186,7 +186,7 @@ def immunte(Fname, Lname, DOB, Gender, user, pw):
                 al.append(o[i])
                 i = i+1
 
-            # parse each row of information with a comma
+            # parse each row of information with a comma, add group name for row that are without one
             for x in range(len(al)):
                 if is_date(al[x][1:10]):
                     al[x] = al[x].replace(' ', ',')
@@ -301,11 +301,22 @@ def main():
             found += 1
             for x in range(len(children)):
                 data_element = children[x].split(",")
-                # if the admin date is not valid skip the records
-                if is_date(data_element[1]):
-                    continue
+
+                # if the admin date is not valid skip the records, clean data on the dosage and reaction column
+                if is_date(data_element[1]) and is_date(data_element[3]):
+                    children[x] = ''
+                elif is_date(data_element[1]) and is_date(data_element[3]) == False:
+                    if data_element[5] != 'No':
+                        data_element[4] = data_element[5]
+                        data_element[5] = ''
+                        # data_element[3]=str(data_element[3].encode("ascii","ignore"))
+                        children[x] = ','.join(data_element[0:6])
+                    else:
+                        data_element[5] = ''
+                        children[x] = ','.join(data_element[0:6])
                 else:
                     children[x] = ''
+
             for x in range(len(children)):
                 if children[x] != '':
                     recordToWrite = MeasYr+','+MemberIdSkey+','+MemberId+',' + \
@@ -329,8 +340,6 @@ def main():
           " members were not found on the MD immunization website.\n")
     print('Files saved: \n' + fileOutputName + '\n' + fileOutputNameNotFound)
     print('\n----------------------------------------------------------------------\n')
-
-
 ##############################################################################
 
 
