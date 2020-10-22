@@ -1,7 +1,8 @@
+
 # Filename: MD_ImmuNet_Scraper.py
 # Author: Zheng Guo
 # Date: 10-16-2020
-# Purpose: Scraping member's immunization registration information from the MD Immunet site based on a given list of members. 
+# Purpose: Scraping member's immunization registration information from the MD Immunet site based on a given list of members.
 # Class list: - Person (measYr, memberId, memberIdSkey, fname, lname, lnameSuffix, dob, gender, stateRes, meas)
 
 # Functions:
@@ -30,7 +31,6 @@ import time
 import pandas as pd
 from dateutil.parser import parse
 from pandas import DataFrame
-
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
 
@@ -297,6 +297,8 @@ def main():
 
         if children == []:
             not_found += 1
+            recordToWrite = MeasYr+','+MemberIdSkey+','+MemberId+',' + Fname + \
+                ','+Lname + ',' + ' ' + ','+DOB+','+Gender+','+StateRes+','+'MD'
             fileOutputNotFound.write(recordToWrite + '\n')
         elif children != []:
             found += 1
@@ -325,7 +327,7 @@ def main():
                     recordToWrite = recordToWrite+','+children[x]
                     fileOutput.write(recordToWrite + '\n')
 
-        # avoid making requests too frequently to not crash the site
+        # avoid making requests too frequently to not crash the site
         time.sleep(15)
         n = +1
 
