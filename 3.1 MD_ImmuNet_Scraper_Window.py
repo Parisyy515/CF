@@ -1,5 +1,5 @@
 
-# Filename: MD_ImmuNet_Scraper_Mac_V2.py
+# Filename: MD_ImmuNet_Scraper_Window.py
 # Author: Zheng Guo
 # Date: 10-16-2020
 # Purpose: Scraping member's immunization registration information from the MD Immunet site based on a given list of members.
@@ -267,7 +267,7 @@ def main():
         memberIdArray.append(m)
 
     # work on setting up driver for md immunet - mac forward slash/windows double backward slash
-    PATH = os.getcwd()+'/'+'chromedriver'
+    PATH = os.getcwd()+'\\'+'chromedriver'
     driver = webdriver.Chrome(PATH)
     driver.get("https://www.mdimmunet.org/prd-IR/portalInfoManager.do")
 
@@ -316,7 +316,6 @@ def main():
                 elif is_date(data_element[1]) and data_element[2] == 'NOT' and data_element[3] == 'VALID':
                     children[x] = ''
                 elif is_date(data_element[1]) and is_date(data_element[3]) == False:
-                    print(data_element[2])
                     if data_element[5] != 'No':
                         data_element[4] = data_element[5]
                         data_element[5] = ''
