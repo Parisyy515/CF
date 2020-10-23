@@ -96,7 +96,6 @@ def is_date(string, fuzzy=False):
 
 def immunte(Fname, Lname, DOB, Gender, driver):
 
-    al = []
     # work on patient search button
     driver.find_element_by_xpath("//*[@id='editVFCProfileButton']").click()
 
@@ -144,10 +143,13 @@ def immunte(Fname, Lname, DOB, Gender, driver):
         # work on patient last name button
         driver.find_element_by_id("redirect1").click()
 
-        if "Access Restricted" in driver.find_element_by_class_name("large").text:
+        header = driver.find_elements_by_class_name("large")[1].text
+
+        if "Access Restricted" in header:
             print(Fname+' '+Lname+' '+" Opt out")
             al = []
-        elif "Patient Information" in driver.find_element_by_class_name("large").text:
+
+        elif "Patient Information" in header:
             first = driver.find_element_by_xpath(
                 "//*[@id='container']/table[3]/tbody/tr/td[2]/table[2]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr[5]/td[1]").text
             if (first == None):
@@ -199,12 +201,10 @@ def main():
     # Welcome message and input info
     print('\nThis is the web scraper for the MaryLand Immunization Record Website.')
     print('You will be prompted to type in a file name and username/password.')
-#     file = input("\nEnter file name: ")
-#     user = input("\nEnter MDImmnet username: ")
-#     pw = input("\nEnter MDImmnet password: ")
-    file = 'MLQM_Immun_Regs_Lkup02042020_SAMPLE.xlsx'
-    user = "Zguo"
-    pw = "CFHedis20"
+    print('If you need to exit the script and stop its process press \'CTRL\' + \'C\'.')
+    file = input("\nEnter file name: ")
+    user = input("\nEnter MDImmnet username: ")
+    pw = input("\nEnter MDImmnet password: ")
 
     date = str(datetime.date.today())
 
@@ -307,7 +307,6 @@ def main():
         Gender = p.getGender()
         StateRes = p.getStateRes()
         children = immunte(Fname, Lname, DOB, Gender, driver)
-#         children = immunte('ALLISON', 'ROBERTS', '10/30/2007', 'F', driver)
 
         if children == []:
             not_found += 1
@@ -325,7 +324,6 @@ def main():
                 elif is_date(data_element[1]) and data_element[2] == 'NOT' and data_element[3] == 'VALID':
                     children[x] = ''
                 elif is_date(data_element[1]) and is_date(data_element[3]) == False:
-                    print(data_element[2])
                     if data_element[5] != 'No':
                         data_element[4] = data_element[5]
                         data_element[5] = ''
