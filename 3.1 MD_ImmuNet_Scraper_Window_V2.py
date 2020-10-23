@@ -1,5 +1,5 @@
 
-# Filename: MD_ImmuNet_Scraper_Windows.py
+# Filename: MD_ImmuNet_Scraper_Window_V2.py
 # Author: Zheng Guo
 # Date: 10-16-2020
 # Purpose: Scraping member's immunization registration information from the MD Immunet site based on a given list of members.
@@ -31,6 +31,7 @@ import time
 import pandas as pd
 from dateutil.parser import parse
 from pandas import DataFrame
+
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
 
@@ -94,26 +95,8 @@ def is_date(string, fuzzy=False):
         return False
 
 
-def immunte(Fname, Lname, DOB, Gender, user, pw):
-
-    # work on setting up driver for md immunet - mac forward slash/windows double backward slash
-    PATH = os.getcwd()+'\\'+'chromedriver'
-    driver = webdriver.Chrome(PATH)
-    driver.get("https://www.mdimmunet.org/prd-IR/portalInfoManager.do")
-
-    # work on login ID
-    username = driver.find_element_by_id("userField")
-    username.clear()
-    username.send_keys(user)
-
-    # work on password
-    password = driver.find_element_by_name("password")
-    password.clear()
-    password.send_keys(pw)
-
+def immunte(Fname, Lname, DOB, Gender, driver):
     # work on patient search button
-    driver.find_element_by_xpath(
-        "//*[@id='loginButtonForm']/div/div/table/tbody/tr[3]/td[1]/input").click()
     driver.find_element_by_xpath("//*[@id='editVFCProfileButton']").click()
 
     # work on last name
@@ -200,7 +183,10 @@ def immunte(Fname, Lname, DOB, Gender, user, pw):
                     g = al[x].split(',', 1)
                     group = g[0]
 
-        driver.close()
+    # work on returning to home page
+    driver.find_element_by_xpath(
+        "//*[@id='headerMenu']/table/tbody/tr/td[2]/div/a").click()
+
     return al
 
 
@@ -280,6 +266,25 @@ def main():
 
         memberIdArray.append(m)
 
+    # work on setting up driver for md immunet - mac forward slash/windows double backward slash
+    PATH = os.getcwd()+'\\'+'chromedriver'
+    driver = webdriver.Chrome(PATH)
+    driver.get("https://www.mdimmunet.org/prd-IR/portalInfoManager.do")
+
+    # work on login ID
+    username = driver.find_element_by_id("userField")
+    username.clear()
+    username.send_keys(user)
+
+    # work on password
+    password = driver.find_element_by_name("password")
+    password.clear()
+    password.send_keys(pw)
+
+    # work on getting to home page - where loop will start
+    driver.find_element_by_xpath(
+        "//*[@id='loginButtonForm']/div/div/table/tbody/tr[3]/td[1]/input").click()
+
     for n in range(total):
         p = peopleArray[n]
         recordToWrite = ''
@@ -293,7 +298,7 @@ def main():
         DOB = str(p.getDateOfBirth())
         Gender = p.getGender()
         StateRes = p.getStateRes()
-        children = immunte(Fname, Lname, DOB, Gender, user, pw)
+        children = immunte(Fname, Lname, DOB, Gender, driver)
 
         if children == []:
             not_found += 1
@@ -305,10 +310,13 @@ def main():
             for x in range(len(children)):
                 data_element = children[x].split(",")
 
-                # if the admin date is not valid skip the records, clean data on the dosage and reaction column
+                # if the admin date is not valid, or the brand is invalid skip the records, clean data on the dosage and reaction column
                 if is_date(data_element[1]) and is_date(data_element[3]):
                     children[x] = ''
+                elif is_date(data_element[1]) and data_element[2] == 'NOT' and data_element[3] == 'VALID':
+                    children[x] = ''
                 elif is_date(data_element[1]) and is_date(data_element[3]) == False:
+                    print(data_element[2])
                     if data_element[5] != 'No':
                         data_element[4] = data_element[5]
                         data_element[5] = ''
@@ -325,9 +333,7 @@ def main():
                         Fname+','+Lname + ','+DOB+','+Gender+','+StateRes+','+'MD'
                     recordToWrite = recordToWrite+','+children[x]
                     fileOutput.write(recordToWrite + '\n')
-
-        # avoid making requests too frequently to not crash the site
-        time.sleep(15)
+        time.sleep(2)
         n = +1
 
     fileOutput.close()
