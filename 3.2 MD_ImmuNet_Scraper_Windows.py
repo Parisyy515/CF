@@ -1,5 +1,5 @@
 
-# Filename: MD_ImmuNet_Scraper.py
+# Filename: MD_ImmuNet_Scraper_Windows.py
 # Author: Zheng Guo
 # Date: 10-16-2020
 # Purpose: Scraping member's immunization registration information from the MD Immunet site based on a given list of members.
@@ -312,7 +312,6 @@ def main():
                     if data_element[5] != 'No':
                         data_element[4] = data_element[5]
                         data_element[5] = ''
-                        # data_element[3]=str(data_element[3].encode("ascii","ignore"))
                         children[x] = ','.join(data_element[0:6])
                     else:
                         data_element[5] = ''
