@@ -150,10 +150,10 @@ def immunte(Fname, Lname, DOB, Gender, driver):
             al = []
 
         elif "Patient Information" in header:
+            # find the first line
             first = driver.find_element_by_xpath(
                 "//*[@id='container']/table[3]/tbody/tr/td[2]/table[2]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr[5]/td[1]").text
             if (first == None):
-                print(Fname+' '+Lname+' '+" Not found")
                 al = []
 
             else:
@@ -193,6 +193,8 @@ def immunte(Fname, Lname, DOB, Gender, driver):
     # work on returning to home page
     driver.find_element_by_xpath(
         "//*[@id='headerMenu']/table/tbody/tr/td[2]/div/a").click()
+    # clear header
+    header = ''
 
     return al
 
@@ -275,7 +277,7 @@ def main():
         memberIdArray.append(m)
 
     # work on setting up driver for md immunet - mac forward slash/windows double backward slash
-    PATH = os.getcwd()+'/'+'chromedriver'
+    PATH = os.getcwd()+'\\'+'chromedriver'
     driver = webdriver.Chrome(PATH)
     driver.get("https://www.mdimmunet.org/prd-IR/portalInfoManager.do")
 
@@ -318,7 +320,7 @@ def main():
             for x in range(len(children)):
                 data_element = children[x].split(",")
 
-                # if the admin date is not valid, or the brand is invalid skip the records, clean data on the dosage and reaction column
+                # if the admin date is not valid, or the brand is not valid skip the records, clean data on the dosage and reaction field
                 if is_date(data_element[1]) and is_date(data_element[3]):
                     children[x] = ''
                 elif is_date(data_element[1]) and data_element[2] == 'NOT' and data_element[3] == 'VALID':
@@ -340,7 +342,6 @@ def main():
                         Fname+','+Lname + ','+DOB+','+Gender+','+StateRes+','+'MD'
                     recordToWrite = recordToWrite+','+children[x]
                     fileOutput.write(recordToWrite + '\n')
-        time.sleep(2)
         n = +1
 
     fileOutput.close()
