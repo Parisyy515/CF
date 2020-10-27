@@ -31,7 +31,6 @@ import time
 import pandas as pd
 from dateutil.parser import parse
 from pandas import DataFrame
-
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
 
@@ -96,6 +95,7 @@ def is_date(string, fuzzy=False):
 
 
 def immunte(Fname, Lname, DOB, Gender, driver):
+
     # work on patient search button
     driver.find_element_by_xpath("//*[@id='editVFCProfileButton']").click()
 
@@ -135,6 +135,7 @@ def immunte(Fname, Lname, DOB, Gender, driver):
         al = []
 
     elif "Patient Demographics Patient Immunization History" in driver.find_element_by_id("queryResultsForm").text:
+
         # work on patient immunization button
         driver.find_element_by_xpath(
             "//*[@id='queryResultsForm']/table[2]/tbody/tr[2]/td[2]/span/label").click()
@@ -142,46 +143,53 @@ def immunte(Fname, Lname, DOB, Gender, driver):
         # work on patient last name button
         driver.find_element_by_id("redirect1").click()
 
-        # work on grabbing the first line of result
-        first = driver.find_element_by_xpath(
-            "//*[@id='container']/table[3]/tbody/tr/td[2]/table[2]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr[5]/td[1]").text
+        # work on getting rid of people who opt out of the site - header
+        header = driver.find_elements_by_class_name("large")[1].text
 
-        if (first == None):
-            print(Fname+' '+Lname+' '+" Not found")
-            al = []
-        else:
-            even = driver.find_elements_by_class_name("evenRow")
-            odd = driver.find_elements_by_class_name("oddRow")
-            o = []
-            e = []
-
-            for value in odd:
-                o.append(value.text)
-            for value in even:
-                e.append(value.text)
-
-            length = len(o)
-            i = 0
+        if "Access Restricted" in header:
+            print(Fname+' '+Lname+' '+" Opt out")
             al = []
 
-            # merge odd and even row together and remove the row marked with complete
-            while i < length:
-                al.append(e[i])
-                al.append(o[i])
-                i = i+1
+        elif "Patient Information" in header:
+            # find the first line
+            first = driver.find_element_by_xpath(
+                "//*[@id='container']/table[3]/tbody/tr/td[2]/table[2]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr[5]/td[1]").text
+            if (first == None):
+                al = []
 
-            # parse each row of information with a comma, add group name for row that are without one
-            for x in range(len(al)):
-                if is_date(al[x][1:10]):
-                    al[x] = al[x].replace(' ', ',')
-                    al[x] = al[x].replace(',of,', ' of ')
-                    al[x] = group + ',' + al[x][2:]
+            else:
+                even = driver.find_elements_by_class_name("evenRow")
+                odd = driver.find_elements_by_class_name("oddRow")
+                o = []
+                e = []
 
-                else:
-                    al[x] = al[x].replace(' ', ',')
-                    al[x] = al[x].replace(',of,', ' of ')
-                    g = al[x].split(',', 1)
-                    group = g[0]
+                for value in odd:
+                    o.append(value.text)
+                for value in even:
+                    e.append(value.text)
+
+                length = len(o)
+                i = 0
+                al = []
+
+                # merge odd and even row together and remove the row marked with complete
+                while i < length:
+                    al.append(e[i])
+                    al.append(o[i])
+                    i = i+1
+
+                # parse each row of information with a comma, add group name for row that are without one
+                for x in range(len(al)):
+                    if is_date(al[x][1:10]):
+                        al[x] = al[x].replace(' ', ',')
+                        al[x] = al[x].replace(',of,', ' of ')
+                        al[x] = group + ',' + al[x][2:]
+
+                    else:
+                        al[x] = al[x].replace(' ', ',')
+                        al[x] = al[x].replace(',of,', ' of ')
+                        g = al[x].split(',', 1)
+                        group = g[0]
 
     # work on returning to home page
     driver.find_element_by_xpath(
@@ -194,6 +202,7 @@ def main():
     # Welcome message and input info
     print('\nThis is the web scraper for the MaryLand Immunization Record Website.')
     print('You will be prompted to type in a file name and username/password.')
+    print('If you need to exit the script and stop its process press \'CTRL\' + \'C\'.')
     file = input("\nEnter file name: ")
     user = input("\nEnter MDImmnet username: ")
     pw = input("\nEnter MDImmnet password: ")
@@ -310,7 +319,7 @@ def main():
             for x in range(len(children)):
                 data_element = children[x].split(",")
 
-                # if the admin date is not valid, or the brand is invalid skip the records, clean data on the dosage and reaction column
+                # if the admin date is not valid, or the brand is not valid skip the records, clean data on the dosage and reaction field
                 if is_date(data_element[1]) and is_date(data_element[3]):
                     children[x] = ''
                 elif is_date(data_element[1]) and data_element[2] == 'NOT' and data_element[3] == 'VALID':
@@ -332,7 +341,6 @@ def main():
                         Fname+','+Lname + ','+DOB+','+Gender+','+StateRes+','+'MD'
                     recordToWrite = recordToWrite+','+children[x]
                     fileOutput.write(recordToWrite + '\n')
-        time.sleep(2)
         n = +1
 
     fileOutput.close()
