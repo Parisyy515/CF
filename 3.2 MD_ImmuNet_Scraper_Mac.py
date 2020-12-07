@@ -31,7 +31,8 @@ import pandas as pd
 from dateutil.parser import parse
 from pandas import DataFrame
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import (NoSuchElementException,
+                                        WebDriverException)
 from selenium.webdriver.support.select import Select
 
 ##############################################################################
@@ -196,6 +197,9 @@ def immunte(Fname, Lname, DOB, Gender, driver):
         driver.find_element_by_xpath(
             "//*[@id='headerMenu']/table/tbody/tr/td[2]/div/a").click()
     except NoSuchElementException:
+        al = []
+
+    except WebDriverException:
         al = []
 
     return al
