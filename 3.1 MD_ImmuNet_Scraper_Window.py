@@ -114,6 +114,9 @@ def immunte(Fname, Lname, DOB, Gender, driver):
     birthdate.clear()
     birthdate.send_keys(DOB)
 
+    global al
+    al = []
+
     # work on advanced search button to input gender
     try:
         driver.find_element_by_xpath(
@@ -195,6 +198,7 @@ def immunte(Fname, Lname, DOB, Gender, driver):
         # work on returning to home page
         driver.find_element_by_xpath(
             "//*[@id='headerMenu']/table/tbody/tr/td[2]/div/a").click()
+
     except NoSuchElementException:
         al = []
 
