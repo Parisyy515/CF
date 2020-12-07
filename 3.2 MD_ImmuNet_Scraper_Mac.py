@@ -1,4 +1,3 @@
-
 # Filename: MD_ImmuNet_Scraper_Mac.py
 # Author: Zheng Guo
 # Date: 10-16-2020
@@ -32,6 +31,7 @@ import pandas as pd
 from dateutil.parser import parse
 from pandas import DataFrame
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.select import Select
 
 ##############################################################################
@@ -115,85 +115,88 @@ def immunte(Fname, Lname, DOB, Gender, driver):
     birthdate.send_keys(DOB)
 
     # work on advanced search button to input gender
-    driver.find_element_by_xpath(
-        "//*[@id='queryResultsForm']/table/tbody/tr/td[2]/table/tbody/tr[3]/td/table/tbody/tr[2]/td[5]/input").click()
-
-    # work on gender selection button
-    obj = Select(driver.find_element_by_name("optSexCode"))
-    if Gender == 'M':
-        obj.select_by_index(2)
-    elif Gender == 'F':
-        obj.select_by_index(1)
-    else:
-        obj.select_by_index(3)
-
-    # work on search button
-    driver.find_element_by_name("cmdFindClient").click()
-
-    # two scenarios could emerge as a search result: 1, no patient found 2, the patient found
-    if "No patients were found for the requested search criteria" in driver.find_element_by_id("queryResultsForm").text:
-        al = []
-
-    elif "Patient Demographics Patient Immunization History" in driver.find_element_by_id("queryResultsForm").text:
-
-        # work on patient immunization button
+    try:
         driver.find_element_by_xpath(
-            "//*[@id='queryResultsForm']/table[2]/tbody/tr[2]/td[2]/span/label").click()
+            "//*[@id='queryResultsForm']/table/tbody/tr/td[2]/table/tbody/tr[3]/td/table/tbody/tr[2]/td[5]/input").click()
 
-        # work on patient last name button
-        driver.find_element_by_id("redirect1").click()
+        # work on gender selection button
+        obj = Select(driver.find_element_by_name("optSexCode"))
+        if Gender == 'M':
+            obj.select_by_index(2)
+        elif Gender == 'F':
+            obj.select_by_index(1)
+        else:
+            obj.select_by_index(3)
 
-        # work on getting rid of people who opt out of the site - header
-        header = driver.find_elements_by_class_name("large")[1].text
+        # work on search button
+        driver.find_element_by_name("cmdFindClient").click()
 
-        if "Access Restricted" in header:
-            print(Fname+' '+Lname+' '+" Opt out")
+        # two scenarios could emerge as a search result: 1, no patient found 2, the patient found
+        if "No patients were found for the requested search criteria" in driver.find_element_by_id("queryResultsForm").text:
             al = []
 
-        elif "Patient Information" in header:
-            # find the first line
-            first = driver.find_element_by_xpath(
-                "//*[@id='container']/table[3]/tbody/tr/td[2]/table[2]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr[5]/td[1]").text
-            if (first == None):
+        elif "Patient Demographics Patient Immunization History" in driver.find_element_by_id("queryResultsForm").text:
+
+            # work on patient immunization button
+            driver.find_element_by_xpath(
+                "//*[@id='queryResultsForm']/table[2]/tbody/tr[2]/td[2]/span/label").click()
+
+            # work on patient last name button
+            driver.find_element_by_id("redirect1").click()
+
+            # work on getting rid of people who opt out of the site - header
+            header = driver.find_elements_by_class_name("large")[1].text
+
+            if "Access Restricted" in header:
+                print(Fname+' '+Lname+' '+" Opt out")
                 al = []
 
-            else:
-                even = driver.find_elements_by_class_name("evenRow")
-                odd = driver.find_elements_by_class_name("oddRow")
-                o = []
-                e = []
+            elif "Patient Information" in header:
+                # find the first line
+                first = driver.find_element_by_xpath(
+                    "//*[@id='container']/table[3]/tbody/tr/td[2]/table[2]/tbody/tr/td/table/tbody/tr[1]/td/table/tbody/tr[5]/td[1]").text
+                if (first == None):
+                    al = []
 
-                for value in odd:
-                    o.append(value.text)
-                for value in even:
-                    e.append(value.text)
+                else:
+                    even = driver.find_elements_by_class_name("evenRow")
+                    odd = driver.find_elements_by_class_name("oddRow")
+                    o = []
+                    e = []
 
-                length = len(o)
-                i = 0
-                al = []
+                    for value in odd:
+                        o.append(value.text)
+                    for value in even:
+                        e.append(value.text)
 
-                # merge odd and even row together and remove the row marked with complete
-                while i < length:
-                    al.append(e[i])
-                    al.append(o[i])
-                    i = i+1
+                    length = len(o)
+                    i = 0
+                    al = []
 
-                # parse each row of information with a comma, add group name for row that are without one
-                for x in range(len(al)):
-                    if is_date(al[x][1:10]):
-                        al[x] = al[x].replace(' ', ',')
-                        al[x] = al[x].replace(',of,', ' of ')
-                        al[x] = group + ',' + al[x][2:]
+                    # merge odd and even row together and remove the row marked with complete
+                    while i < length:
+                        al.append(e[i])
+                        al.append(o[i])
+                        i = i+1
 
-                    else:
-                        al[x] = al[x].replace(' ', ',')
-                        al[x] = al[x].replace(',of,', ' of ')
-                        g = al[x].split(',', 1)
-                        group = g[0]
+                    # parse each row of information with a comma, add group name for row that are without one
+                    for x in range(len(al)):
+                        if is_date(al[x][1:10]):
+                            al[x] = al[x].replace(' ', ',')
+                            al[x] = al[x].replace(',of,', ' of ')
+                            al[x] = group + ',' + al[x][2:]
 
-    # work on returning to home page
-    driver.find_element_by_xpath(
-        "//*[@id='headerMenu']/table/tbody/tr/td[2]/div/a").click()
+                        else:
+                            al[x] = al[x].replace(' ', ',')
+                            al[x] = al[x].replace(',of,', ' of ')
+                            g = al[x].split(',', 1)
+                            group = g[0]
+
+        # work on returning to home page
+        driver.find_element_by_xpath(
+            "//*[@id='headerMenu']/table/tbody/tr/td[2]/div/a").click()
+    except NoSuchElementException:
+        al = []
 
     return al
 
