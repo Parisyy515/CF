@@ -21,6 +21,7 @@
 # - Second output: HEDIS_VA_Immun_Records_Not_Found_YYYY_MM_DD.csv
 ##############################################################################
 
+
 # Imports
 import csv
 import datetime
@@ -32,8 +33,7 @@ import pandas as pd
 from dateutil.parser import parse
 from pandas import DataFrame
 from selenium import webdriver
-from selenium.common.exceptions import (NoSuchElementException,
-                                        UnexpectedAlertPresentException,
+from selenium.common.exceptions import (UnexpectedAlertPresentException,
                                         WebDriverException)
 from selenium.webdriver.support.select import Select
 
@@ -122,68 +122,74 @@ def immunte(Fname, Lname, DOB, Gender, driver):
     else:
         driver.find_element_by_xpath("//input[@value='N']").click()
 
+    time.sleep(0.25)
     # work on search button
-    try:
-        driver.find_element_by_name("cmdFindClient").click()
 
-        # two scenarios could emerge as a search result: 1, no patient found 2, the patient found
-        header = driver.find_element_by_css_selector('p.large').text
+    driver.find_element_by_name("cmdFindClient").click()
 
-        if "Client Search Criteria" in header:
-            al = []
-            # work on returning to home page
-            driver.find_element_by_xpath(
-                "//*[@id='xMenu1a']/font/a/font").click()
-            header = ''
+    # two scenarios could emerge as a search result: 1, no patient found 2, the patient found
+    header = driver.find_element_by_css_selector('p.large').text
 
-        elif "Client Information" in header:
-
-            even = driver.find_elements_by_class_name("evenRow")
-            odd = driver.find_elements_by_class_name("oddRow")
-            o = []
-            e = []
-
-            for value in odd:
-                o.append(value.text)
-            for value in even:
-                e.append(value.text)
-
-            length = len(o)
-            i = 0
-            al = []
-
-            # merge odd and even row together and remove the row marked with complete
-            while i < length:
-                al.append(e[i])
-                al.append(o[i])
-                i = i+1
-
-            # parse each row of information with a comma, add group name for row that are without one
-            for x in range(len(al)):
-                if is_date(al[x][1:10]):
-                    al[x] = al[x].replace(' ', ',')
-                    al[x] = al[x].replace(',of,', ' of ')
-                    al[x] = group + ',' + al[x][2:]
-
-                else:
-                    al[x] = al[x].replace(' ', ',')
-                    al[x] = al[x].replace(',of,', ' of ')
-                    g = al[x].split(',', 1)
-                    group = g[0]
-
-            time.sleep(0.5)
-            header = ''
-            # work on returning to home page
-            driver.find_element_by_xpath(
-                "/html/body/table/tbody/tr/td[1]/div/font/a/font").click()
-
-    except UnexpectedAlertPresentException:
+    if "Client Search Criteria" in header:
         al = []
-    except NoSuchElementException:
+        # work on returning to home page
+        driver.find_element_by_xpath(
+            "//*[@id='xMenu1a']/font/a/font").click()
+        header = ''
+
+    elif "Access Restricted" in header:
         al = []
-    except WebDriverException:
+        # work on returning to home page
+        driver.find_element_by_xpath(
+            "//*[@id='xMenu1a']/font/a/font").click()
+        header = ''
+
+    elif "Client Information" in header:
+
+        even = driver.find_elements_by_class_name("evenRow")
+        odd = driver.find_elements_by_class_name("oddRow")
+        o = []
+        e = []
+        o1 = []
+        e1 = []
+
+        for value in odd:
+            o1.append(value.text)
+        for value in even:
+            e1.append(value.text)
+
+        o = list(filter(lambda x: "/" in x, o1))
+        e = list(filter(lambda x: "/" in x, e1))
+
+        length = min(len(o), len(e))
+        i = 0
         al = []
 
+        # merge odd and even row together and remove the row marked with complete
+        while i < length:
+            al.append(e[i])
+            al.append(o[i])
+            i = i+1
+
+        # parse each row of information with a comma, add group name for row that are without one
+        for x in range(len(al)):
+            if is_date(al[x][1:10]):
+                al[x] = al[x].replace(' ', ',')
+                al[x] = al[x].replace(',of,', ' of ')
+                al[x] = group + ',' + al[x][2:]
+
+            else:
+                al[x] = al[x].replace(' ', ',')
+                al[x] = al[x].replace(',of,', ' of ')
+                g = al[x].split(',', 1)
+                group = g[0]
+
+        # wait for result to load into al
+        time.sleep(0.25)
+        header = ''
+        # work on returning to home page
+        driver.find_element_by_xpath(
+            "/html/body/table/tbody/tr/td[1]/div/font/a/font").click()
     return al
 
 
@@ -282,8 +288,8 @@ def main():
     driver.find_element_by_xpath(
         "/html/body/table/tbody/tr[1]/td[1]/form/table[1]/tbody/tr[5]/td/input").click()
 
-    # work on view client report button
-    time.sleep(0.5)
+    # work on view client report button, wait 0.5 for result to show up
+    time.sleep(0.25)
     driver.find_element_by_class_name('xMenuArea').click()
 
     for n in range(total):
@@ -299,7 +305,12 @@ def main():
         DOB = str(p.getDateOfBirth())
         Gender = p.getGender()
         StateRes = p.getStateRes()
-        children = immunte(Fname, Lname, DOB, Gender, driver)
+
+        try:
+            children = immunte(Fname, Lname, DOB, Gender, driver)
+        except UnexpectedAlertPresentException:
+            time.sleep(0.5)
+            children = immunte(Fname, Lname, DOB, Gender, driver)
 
         if children == []:
             not_found += 1
@@ -311,7 +322,6 @@ def main():
             for x in range(len(children)):
                 data_element = children[x].split(",")
 
-                # if the admin date is not valid, or the brand is not valid skip the records, clean data on the dosage and reaction field
                 if is_date(data_element[1]) and is_date(data_element[3]):
                     children[x] = ''
                 elif is_date(data_element[1]) and data_element[2] == 'NOT' and data_element[3] == 'VALID':
