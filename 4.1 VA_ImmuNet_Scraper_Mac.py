@@ -289,7 +289,7 @@ def main():
         "/html/body/table/tbody/tr[1]/td[1]/form/table[1]/tbody/tr[5]/td/input").click()
 
     # work on view client report button, wait 0.5 for result to show up
-    time.sleep(0.25)
+    time.sleep(0.5)
     driver.find_element_by_class_name('xMenuArea').click()
 
     for n in range(total):
